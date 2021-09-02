@@ -33,7 +33,6 @@ println ("""
         ===========================================================================================
         Sample file: ${params.samples}
         Macs2 q-value: ${params.macs_q}
-        Macs2 broad peaks: ${params.broad}
         IDR threshold: ${params.idr_threshold}
         ===========================================================================================
         """)

@@ -32,7 +32,8 @@ println ("""
                                             Macs2 peakcallig & IDR
         ===========================================================================================
         Sample file: ${params.samples}
-        Macs2 p-value: ${params.macs_p}
+        Macs2 q-value: ${params.macs_q}
+        Macs2 broad peaks: ${params.broad}
         IDR threshold: ${params.idr_threshold}
         ===========================================================================================
         """)
@@ -53,10 +54,22 @@ process PEAKCALLING {
 
 
     script:
+    if (params.broad == 'false')
     """
     # Peal calling for replicates
-    macs2 callpeak -t ${bam1} -c ${bam1_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_rep1 -B -p ${params.macs_p}  2> ${sample_id}_rep1_macs2.log
-    macs2 callpeak -t ${bam2} -c ${bam2_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_rep2 -B -p ${params.macs_p}  2> ${sample_id}_rep2_macs2.log
+    macs2 callpeak -t ${bam1} -c ${bam1_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_rep1 -B -q ${params.macs_q}  2> ${sample_id}_rep1_macs2.log
+    macs2 callpeak -t ${bam2} -c ${bam2_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_rep2 -B -q ${params.macs_q}  2> ${sample_id}_rep2_macs2.log
+
+    #Sort peak by -log10(p-value)
+    sort -k8,8nr ${sample_id}_rep1_peaks.narrowPeak > ${sample_id}_rep1_sort_peaks.narrowPeak
+    sort -k8,8nr ${sample_id}_rep2_peaks.narrowPeak > ${sample_id}_rep2_sort_peaks.narrowPeak
+    """
+    
+    else if (params.broad == 'true')
+    """
+    # Peal calling for replicates
+    macs2 callpeak -t ${bam1} -c ${bam1_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_rep1 -B -q ${params.macs_q} --broad 2> ${sample_id}_rep1_macs2.log
+    macs2 callpeak -t ${bam2} -c ${bam2_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_rep2 -B -q ${params.macs_q} --broad 2> ${sample_id}_rep2_macs2.log
 
     #Sort peak by -log10(p-value)
     sort -k8,8nr ${sample_id}_rep1_peaks.narrowPeak > ${sample_id}_rep1_sort_peaks.narrowPeak
@@ -172,9 +185,19 @@ process PEAKCALLING_POOLED_REPS {
     tuple val(sample_id), path("${sample_id}_pooled_sort_peaks.narrowPeak")  into ch_peak_pooled_true, ch_peak_pooled_pseudo
 
     script:
+    if (params.broad == 'false')
     """
     # Peal calling for replicates
-    macs2 callpeak -t ${bam_pr} -c ${bam_pr_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled -B -p ${params.macs_p}  2> ${sample_id}_pooled_macs2.log
+    macs2 callpeak -t ${bam_pr} -c ${bam_pr_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled -B -q ${params.macs_q}  2> ${sample_id}_pooled_macs2.log
+
+    #Sort peak by -log10(p-value)
+    sort -k8,8nr ${sample_id}_pooled_peaks.narrowPeak > ${sample_id}_pooled_sort_peaks.narrowPeak
+    """
+    
+    else if (params.broad == 'true')
+    """
+    # Peal calling for replicates
+    macs2 callpeak -t ${bam_pr} -c ${bam_pr_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled -B -q ${params.macs_q} --broad 2> ${sample_id}_pooled_macs2.log
 
     #Sort peak by -log10(p-value)
     sort -k8,8nr ${sample_id}_pooled_peaks.narrowPeak > ${sample_id}_pooled_sort_peaks.narrowPeak
@@ -196,11 +219,19 @@ process PEAKCALLING_SELF_PSEUDOREPS {
     tuple val(sample_id), path("${sample_id}_rep1_self_pseudorep1_sort_peaks.narrowPeak"), path("${sample_id}_rep1_self_pseudorep2_sort_peaks.narrowPeak"), path("${sample_id}_rep2_self_pseudorep1_sort_peaks.narrowPeak"), path("${sample_id}_rep2_self_pseudorep2_sort_peaks.narrowPeak")  into ch_peak_self_pseudoreps
 
     script:
+    if (params.broad == 'false')
+    """
+    # Peal calling for replicates
+    macs2 callpeak -t ${bam_pr} -c ${bam_pr_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled -B -q ${params.macs_q}  2> ${sample_id}_pooled_macs2.log
+
+    #Sort peak by -log10(p-value)
+    sort -k8,8nr ${sample_id}_pooled_peaks.narrowPeak > ${sample_id}_pooled_sort_peaks.narrowPeak
+    """
     """
     ## Rep1
     # Peal calling for replicates
-    macs2 callpeak -t ${bam_rep1_pr1} -c ${bam_ctrl_rep1_pr1} -f BAM -g ${params.genome_size} -n ${sample_id}_rep1_self_pseudorep1 -B -p ${params.macs_p}  2> ${sample_id}_rep1_self_pseudorep1_macs2.log
-    macs2 callpeak -t ${bam_rep1_pr2} -c ${bam_ctrl_rep1_pr2} -f BAM -g ${params.genome_size} -n ${sample_id}_rep1_self_pseudorep2 -B -p ${params.macs_p}  2> ${sample_id}_rep1_self_pseudorep2_macs2.log
+    macs2 callpeak -t ${bam_rep1_pr1} -c ${bam_ctrl_rep1_pr1} -f BAM -g ${params.genome_size} -n ${sample_id}_rep1_self_pseudorep1 -B -q ${params.macs_q}  2> ${sample_id}_rep1_self_pseudorep1_macs2.log
+    macs2 callpeak -t ${bam_rep1_pr2} -c ${bam_ctrl_rep1_pr2} -f BAM -g ${params.genome_size} -n ${sample_id}_rep1_self_pseudorep2 -B -q ${params.macs_q}  2> ${sample_id}_rep1_self_pseudorep2_macs2.log
 
     #Sort peak by -log10(p-value)
     sort -k8,8nr ${sample_id}_rep1_self_pseudorep1_peaks.narrowPeak > ${sample_id}_rep1_self_pseudorep1_sort_peaks.narrowPeak
@@ -208,8 +239,36 @@ process PEAKCALLING_SELF_PSEUDOREPS {
 
     ## Rep2
     # Peal calling for replicates
-    macs2 callpeak -t ${bam_rep2_pr1} -c ${bam_ctrl_rep2_pr1} -f BAM -g ${params.genome_size} -n ${sample_id}_rep2_self_pseudorep1 -B -p ${params.macs_p}  2> ${sample_id}_rep2_self_pseudorep1_macs2.log
-    macs2 callpeak -t ${bam_rep2_pr2} -c ${bam_ctrl_rep2_pr2} -f BAM -g ${params.genome_size} -n ${sample_id}_rep2_self_pseudorep2 -B -p ${params.macs_p}  2> ${sample_id}_rep2_self_pseudorep2_macs2.log
+    macs2 callpeak -t ${bam_rep2_pr1} -c ${bam_ctrl_rep2_pr1} -f BAM -g ${params.genome_size} -n ${sample_id}_rep2_self_pseudorep1 -B -q ${params.macs_q}  2> ${sample_id}_rep2_self_pseudorep1_macs2.log
+    macs2 callpeak -t ${bam_rep2_pr2} -c ${bam_ctrl_rep2_pr2} -f BAM -g ${params.genome_size} -n ${sample_id}_rep2_self_pseudorep2 -B -q ${params.macs_q}  2> ${sample_id}_rep2_self_pseudorep2_macs2.log
+
+    #Sort peak by -log10(p-value)
+    sort -k8,8nr ${sample_id}_rep2_self_pseudorep1_peaks.narrowPeak > ${sample_id}_rep2_self_pseudorep1_sort_peaks.narrowPeak
+    sort -k8,8nr ${sample_id}_rep2_self_pseudorep2_peaks.narrowPeak > ${sample_id}_rep2_self_pseudorep2_sort_peaks.narrowPeak
+    """
+    
+    else if (params.broad == 'true')
+    """
+    # Peal calling for replicates
+    macs2 callpeak -t ${bam_pr} -c ${bam_pr_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled -B -q ${params.macs_q}  2> ${sample_id}_pooled_macs2.log
+
+    #Sort peak by -log10(p-value)
+    sort -k8,8nr ${sample_id}_pooled_peaks.narrowPeak > ${sample_id}_pooled_sort_peaks.narrowPeak
+    """
+    """
+    ## Rep1
+    # Peal calling for replicates
+    macs2 callpeak -t ${bam_rep1_pr1} -c ${bam_ctrl_rep1_pr1} -f BAM -g ${params.genome_size} -n ${sample_id}_rep1_self_pseudorep1 -B -q ${params.macs_q} --broad 2> ${sample_id}_rep1_self_pseudorep1_macs2.log
+    macs2 callpeak -t ${bam_rep1_pr2} -c ${bam_ctrl_rep1_pr2} -f BAM -g ${params.genome_size} -n ${sample_id}_rep1_self_pseudorep2 -B -q ${params.macs_q} --broad 2> ${sample_id}_rep1_self_pseudorep2_macs2.log
+
+    #Sort peak by -log10(p-value)
+    sort -k8,8nr ${sample_id}_rep1_self_pseudorep1_peaks.narrowPeak > ${sample_id}_rep1_self_pseudorep1_sort_peaks.narrowPeak
+    sort -k8,8nr ${sample_id}_rep1_self_pseudorep2_peaks.narrowPeak > ${sample_id}_rep1_self_pseudorep2_sort_peaks.narrowPeak
+
+    ## Rep2
+    # Peal calling for replicates
+    macs2 callpeak -t ${bam_rep2_pr1} -c ${bam_ctrl_rep2_pr1} -f BAM -g ${params.genome_size} -n ${sample_id}_rep2_self_pseudorep1 -B -q ${params.macs_q} --broad 2> ${sample_id}_rep2_self_pseudorep1_macs2.log
+    macs2 callpeak -t ${bam_rep2_pr2} -c ${bam_ctrl_rep2_pr2} -f BAM -g ${params.genome_size} -n ${sample_id}_rep2_self_pseudorep2 -B -q ${params.macs_q} --broad 2> ${sample_id}_rep2_self_pseudorep2_macs2.log
 
     #Sort peak by -log10(p-value)
     sort -k8,8nr ${sample_id}_rep2_self_pseudorep1_peaks.narrowPeak > ${sample_id}_rep2_self_pseudorep1_sort_peaks.narrowPeak
@@ -233,10 +292,22 @@ process PEALCALLING_POOLED_PSEUDOREPS {
 
 
     script:
+    if (params.broad == 'false')
     """
     # Peal calling for replicates
-    macs2 callpeak -t ${bam_ppr1} -c ${bam_ppr1_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled_pseudorep1 -B -p ${params.macs_p}  2> ${sample_id}_pooled_pseudorep1_macs2.log
-    macs2 callpeak -t ${bam_ppr2} -c ${bam_ppr2_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled_pseudorep2 -B -p ${params.macs_p}  2> ${sample_id}_pooled_pseudorep2_macs2.log
+    macs2 callpeak -t ${bam_ppr1} -c ${bam_ppr1_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled_pseudorep1 -B -q ${params.macs_q}  2> ${sample_id}_pooled_pseudorep1_macs2.log
+    macs2 callpeak -t ${bam_ppr2} -c ${bam_ppr2_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled_pseudorep2 -B -q ${params.macs_q}  2> ${sample_id}_pooled_pseudorep2_macs2.log
+
+    #Sort peak by -log10(p-value)
+    sort -k8,8nr ${sample_id}_pooled_pseudorep1_peaks.narrowPeak > ${sample_id}_pooled_pseudorep1_sort_peaks.narrowPeak
+    sort -k8,8nr ${sample_id}_pooled_pseudorep2_peaks.narrowPeak > ${sample_id}_pooled_pseudorep2_sort_peaks.narrowPeak
+    """
+    
+    else if (params.broad == 'true')
+    """
+    # Peal calling for replicates
+    macs2 callpeak -t ${bam_ppr1} -c ${bam_ppr1_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled_pseudorep1 -B -q ${params.macs_q} --broad 2> ${sample_id}_pooled_pseudorep1_macs2.log
+    macs2 callpeak -t ${bam_ppr2} -c ${bam_ppr2_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled_pseudorep2 -B -q ${params.macs_q} --broad 2> ${sample_id}_pooled_pseudorep2_macs2.log
 
     #Sort peak by -log10(p-value)
     sort -k8,8nr ${sample_id}_pooled_pseudorep1_peaks.narrowPeak > ${sample_id}_pooled_pseudorep1_sort_peaks.narrowPeak

@@ -4,7 +4,7 @@ def helpMessage() {
   log.info"""
   Usage:
   The typical command for running the pipeline is as follows:
-  nextflow run main.nf --samples samples.txt --outdir outdir 
+  nextflow run main.nf --samples samples.txt --outdir outdir
 
   """.stripIndent()
   }
@@ -17,14 +17,14 @@ if (params.help) {
 }
 
 /*
- * VALIDATE ctrlS
+ * VALIDATE
  */
 
 if (params.samples)     { ch_samples = Channel.fromPath(params.samples, checkIfExists: true) } else { exit 1, 'Samples not specified' }
     ch_samples
         .splitCsv(header:true, sep:'\t')
         .map { row -> [ row.sample_id,  file(row.bam1), file(row.bam1_ctrl), file(row.bam2), file(row.bam2_ctrl)] }
-        .into { ch_samples_split_macs; ch_samples_split_pooled_pseudo; ch_samples_split_self_pseudo}
+        .into { ch_samples_split_macs; ch_samples_split_pooled_pseudo; ch_samples_split_self_pseudo; ch_samples_split_bigwig}
 
 
 println ("""
@@ -54,7 +54,7 @@ process PEAKCALLING {
 
     script:
     """
-    # Peal calling for replicates
+    # peak calling for replicates
     macs2 callpeak -t ${bam1} -c ${bam1_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_rep1 -B -q ${params.macs_q}  2> ${sample_id}_rep1_macs2.log
     macs2 callpeak -t ${bam2} -c ${bam2_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_rep2 -B -q ${params.macs_q}  2> ${sample_id}_rep2_macs2.log
 
@@ -129,7 +129,7 @@ process CREATE_POOLED_PSEUDOREPS {
     set val(sample_id), path(bam1), path(bam1_ctrl), path(bam2), path(bam2_ctrl) from ch_samples_split_pooled_pseudo
 
     output:
-    tuple val(sample_id), path("${sample_id}_pooled_merged.bam"), path("${sample_id}_pooled_ctrl_merged.bam") into ch_bam_pooled_reps
+    tuple val(sample_id), path("${sample_id}_pooled_merged.bam"), path("${sample_id}_pooled_ctrl_merged.bam") into ch_bam_pooled_reps, ch_bam_pooled_reps_for_bigwig
     tuple val(sample_id), path("${sample_id}_pooled_pseudorep1.bam"), path("${sample_id}_ctrl_pooled_pseudorep1.bam"), path("${sample_id}_pooled_pseudorep2.bam"),path("${sample_id}_ctrl_pooled_pseudorep2.bam")  into ch_bam_pooled_pseudoreps
 
     script:
@@ -173,7 +173,7 @@ process PEAKCALLING_POOLED_REPS {
 
     script:
     """
-    # Peal calling for replicates
+    # peak calling for replicates
     macs2 callpeak -t ${bam_pr} -c ${bam_pr_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled -B -q ${params.macs_q}  2> ${sample_id}_pooled_macs2.log
 
     #Sort peak by -log10(p-value)
@@ -198,7 +198,7 @@ process PEAKCALLING_SELF_PSEUDOREPS {
     script:
     """
     ## Rep1
-    # Peal calling for replicates
+    # peak calling for replicates
     macs2 callpeak -t ${bam_rep1_pr1} -c ${bam_ctrl_rep1_pr1} -f BAM -g ${params.genome_size} -n ${sample_id}_rep1_self_pseudorep1 -B -q ${params.macs_q}  2> ${sample_id}_rep1_self_pseudorep1_macs2.log
     macs2 callpeak -t ${bam_rep1_pr2} -c ${bam_ctrl_rep1_pr2} -f BAM -g ${params.genome_size} -n ${sample_id}_rep1_self_pseudorep2 -B -q ${params.macs_q}  2> ${sample_id}_rep1_self_pseudorep2_macs2.log
 
@@ -207,7 +207,7 @@ process PEAKCALLING_SELF_PSEUDOREPS {
     sort -k8,8nr ${sample_id}_rep1_self_pseudorep2_peaks.narrowPeak > ${sample_id}_rep1_self_pseudorep2_sort_peaks.narrowPeak
 
     ## Rep2
-    # Peal calling for replicates
+    # peak calling for replicates
     macs2 callpeak -t ${bam_rep2_pr1} -c ${bam_ctrl_rep2_pr1} -f BAM -g ${params.genome_size} -n ${sample_id}_rep2_self_pseudorep1 -B -q ${params.macs_q}  2> ${sample_id}_rep2_self_pseudorep1_macs2.log
     macs2 callpeak -t ${bam_rep2_pr2} -c ${bam_ctrl_rep2_pr2} -f BAM -g ${params.genome_size} -n ${sample_id}_rep2_self_pseudorep2 -B -q ${params.macs_q}  2> ${sample_id}_rep2_self_pseudorep2_macs2.log
 
@@ -221,7 +221,7 @@ process PEAKCALLING_SELF_PSEUDOREPS {
 /*
  * 6. Peak calling for pooled pseudo replicates
  */
-process PEALCALLING_POOLED_PSEUDOREPS {
+process peakCALLING_POOLED_PSEUDOREPS {
 
     when:
     !params.skip_idr
@@ -235,7 +235,7 @@ process PEALCALLING_POOLED_PSEUDOREPS {
 
     script:
     """
-    # Peal calling for replicates
+    # peak calling for replicates
     macs2 callpeak -t ${bam_ppr1} -c ${bam_ppr1_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled_pseudorep1 -B -q ${params.macs_q}  2> ${sample_id}_pooled_pseudorep1_macs2.log
     macs2 callpeak -t ${bam_ppr2} -c ${bam_ppr2_ctrl} -f BAM -g ${params.genome_size} -n ${sample_id}_pooled_pseudorep2 -B -q ${params.macs_q}  2> ${sample_id}_pooled_pseudorep2_macs2.log
 
@@ -417,5 +417,40 @@ process QC {
         Optimal_set = idr_ppr
 
     Optimal_set.to_csv("${sample_id}_optimal_set.IDR0.05.narrowPeak.gz", index=False, sep='\t', header=False, compression='gzip')
+    """
+}
+
+
+
+/*
+ * 11. Generate bigwigs
+ */
+process GENERATE_BIGWIGS {
+    publishDir "${params.outdir}/${sample_id}/bigwigs", mode: 'copy', pattern: '*.bw'
+
+    when:
+    !params.skip_bigwig
+
+    input:
+    set val(sample_id), path(bam1), path(bam1_ctrl), path(bam2), path(bam2_ctrl) from ch_samples_split_bigwig
+    set val(sample_id), path(bam_pr), path(bam_pr_ctrl)  from ch_bam_pooled_reps_for_bigwig
+
+    output:
+    tuple val(sample_id), path("${sample_id}_rep1.bw"), path("${sample_id}_Input_rep1.bw"), path("${sample_id}_rep2.bw"), path("${sample_id}_Input_rep2.bw")  into ch_bigwig_reps
+    tuple val(sample_id), path("${sample_id}_pooled.bw"), path("${sample_id}_Input_pooled.bw")  into ch_bigwig_pooled
+
+    script:
+    """
+    # Generate bigwigs for individual reps
+    bamCoverage -b ${bam1} --effectiveGenomeSize ${params.genome_size} --centerReads --normalizeUsing RPGC -o ${sample_id}_rep1.bw
+    bamCoverage -b ${bam2} --effectiveGenomeSize ${params.genome_size} --centerReads --normalizeUsing RPGC -o ${sample_id}_rep2.bw
+
+    # Generate bigwigs for individual inputs
+    bamCoverage -b ${bam1_ctrl} --effectiveGenomeSize ${params.genome_size} --centerReads --normalizeUsing RPGC -o ${sample_id}_Input_rep1.bw
+    bamCoverage -b ${bam2_ctrl} --effectiveGenomeSize ${params.genome_size} --centerReads --normalizeUsing RPGC -o ${sample_id}_Input_rep2.bw
+
+    # Generate bigwigs for pooled reps/inputs
+    bamCoverage -b ${bam_pr} --effectiveGenomeSize ${params.genome_size} --centerReads --normalizeUsing RPGC -o ${sample_id}_pooled.bw
+    bamCoverage -b ${bam_pr_ctrl} --effectiveGenomeSize ${params.genome_size} --centerReads --normalizeUsing RPGC -o ${sample_id}_Input_pooled.bw
     """
 }

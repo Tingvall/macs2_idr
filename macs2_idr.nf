@@ -442,15 +442,21 @@ process GENERATE_BIGWIGS {
     script:
     """
     # Generate bigwigs for individual reps
+    samtools index ${bam1}
     bamCoverage -b ${bam1} --effectiveGenomeSize ${params.genome_size} --centerReads --normalizeUsing RPGC -o ${sample_id}_rep1.bw
+    samtools index ${bam2}
     bamCoverage -b ${bam2} --effectiveGenomeSize ${params.genome_size} --centerReads --normalizeUsing RPGC -o ${sample_id}_rep2.bw
 
     # Generate bigwigs for individual inputs
+    samtools index ${bam1_ctrl}
     bamCoverage -b ${bam1_ctrl} --effectiveGenomeSize ${params.genome_size} --centerReads --normalizeUsing RPGC -o ${sample_id}_Input_rep1.bw
+    samtools index ${bam2_ctrl}
     bamCoverage -b ${bam2_ctrl} --effectiveGenomeSize ${params.genome_size} --centerReads --normalizeUsing RPGC -o ${sample_id}_Input_rep2.bw
 
     # Generate bigwigs for pooled reps/inputs
+    samtools index ${bam_pr}
     bamCoverage -b ${bam_pr} --effectiveGenomeSize ${params.genome_size} --centerReads --normalizeUsing RPGC -o ${sample_id}_pooled.bw
+    samtools index ${bam_pr_ctrl}
     bamCoverage -b ${bam_pr_ctrl} --effectiveGenomeSize ${params.genome_size} --centerReads --normalizeUsing RPGC -o ${sample_id}_Input_pooled.bw
     """
 }

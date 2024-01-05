@@ -351,7 +351,7 @@ process IDR_POOLED_PSEUDOREPS {
     """
     idr --samples ${peaks_ppr1} ${peaks_ppr2} \
     --peak-list ${peaks_pooled} \
-    --input-file-type narrowPeak \
+    --input-file-type broadPeak \
     --rank p.value \
     --output-file ${sample_id}_pooled_pseudoreps_idr \
     --plot \

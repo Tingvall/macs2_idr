@@ -259,7 +259,7 @@ process IDR_TRUE_REPS {
     set val(sample_id), path(peaks_pooled)  from ch_peak_pooled_true
 
     output:
-    tuple val(sample_id), path("${sample_id}_true_reps.IDR0.05.narrowPeak.gz")  into ch_idr_truereps
+    tuple val(sample_id), path("${sample_id}_true_reps.IDR${params.idr_threshold}.narrowPeak.gz")  into ch_idr_truereps
 
 
     script:
@@ -276,7 +276,7 @@ process IDR_TRUE_REPS {
 
     idr_treshold_transformed=\$(awk -v p=${params.idr_threshold} 'BEGIN{print -log(p)/log(10)}')
 
-    awk 'BEGIN{OFS="\t"} \$12>='"\${idr_treshold_transformed}"' {print \$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10}' ${sample_id}_true_reps_idr | sort | uniq | sort -k7n,7n | gzip -nc > ${sample_id}_true_reps.IDR0.05.narrowPeak.gz
+    awk 'BEGIN{OFS="\t"} \$12>='"\${idr_treshold_transformed}"' {print \$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10}' ${sample_id}_true_reps_idr | sort | uniq | sort -k7n,7n | gzip -nc > ${sample_id}_true_reps.IDR${params.idr_threshold}.narrowPeak.gz
     """
 }
 
@@ -294,7 +294,7 @@ process IDR_SELF_PSEUDOREPS {
     set val(sample_id), path(peaks_rep1), path(peaks_rep2) from ch_peak_reps_self_pseudo
 
     output:
-    tuple val(sample_id), path("${sample_id}_rep1_self_pseudoreps.IDR0.05.narrowPeak.gz"), path("${sample_id}_rep2_self_pseudoreps.IDR0.05.narrowPeak.gz")  into ch_idr_self_pseudoreps
+    tuple val(sample_id), path("${sample_id}_rep1_self_pseudoreps.IDR${params.idr_threshold}.narrowPeak.gz"), path("${sample_id}_rep2_self_pseudoreps.IDR${params.idr_threshold}.narrowPeak.gz")  into ch_idr_self_pseudoreps
 
 
     script:
@@ -312,7 +312,7 @@ process IDR_SELF_PSEUDOREPS {
 
     idr_treshold_transformed=\$(awk -v p=${params.idr_threshold} 'BEGIN{print -log(p)/log(10)}')
 
-    awk 'BEGIN{OFS="\t"} \$12>='"\${idr_treshold_transformed}"' {print \$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10}' ${sample_id}_rep1_self_pseudoreps_idr | sort | uniq | sort -k7n,7n | gzip -nc > ${sample_id}_rep1_self_pseudoreps.IDR0.05.narrowPeak.gz
+    awk 'BEGIN{OFS="\t"} \$12>='"\${idr_treshold_transformed}"' {print \$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10}' ${sample_id}_rep1_self_pseudoreps_idr | sort | uniq | sort -k7n,7n | gzip -nc > ${sample_id}_rep1_self_pseudoreps.IDR${params.idr_threshold}.narrowPeak.gz
 
 
     ## Rep1
@@ -326,7 +326,7 @@ process IDR_SELF_PSEUDOREPS {
     --use-best-multisummit-IDR \
     --log-output-file ${sample_id}_rep2_self_pseudoreps.idr.log
 
-    awk 'BEGIN{OFS="\t"} \$12>='"\${idr_treshold_transformed}"' {print \$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10}' ${sample_id}_rep2_self_pseudoreps_idr | sort | uniq | sort -k7n,7n | gzip -nc > ${sample_id}_rep2_self_pseudoreps.IDR0.05.narrowPeak.gz
+    awk 'BEGIN{OFS="\t"} \$12>='"\${idr_treshold_transformed}"' {print \$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10}' ${sample_id}_rep2_self_pseudoreps_idr | sort | uniq | sort -k7n,7n | gzip -nc > ${sample_id}_rep2_self_pseudoreps.IDR${params.idr_threshold}.narrowPeak.gz
     """
 }
 
@@ -344,7 +344,7 @@ process IDR_POOLED_PSEUDOREPS {
     set val(sample_id), path(peaks_pooled)  from ch_peak_pooled_pseudo
 
     output:
-    tuple val(sample_id), path("${sample_id}_pooled_pseudoreps.IDR0.05.narrowPeak.gz")  into ch_idr_pooled_pseudoreps
+    tuple val(sample_id), path("${sample_id}_pooled_pseudoreps.IDR${params.idr_threshold}.narrowPeak.gz")  into ch_idr_pooled_pseudoreps
 
 
     script:
@@ -361,7 +361,7 @@ process IDR_POOLED_PSEUDOREPS {
 
     idr_treshold_transformed=\$(awk -v p=${params.idr_threshold} 'BEGIN{print -log(p)/log(10)}')
 
-    awk 'BEGIN{OFS="\t"} \$12>='"\${idr_treshold_transformed}"' {print \$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10}' ${sample_id}_pooled_pseudoreps_idr | sort | uniq | sort -k7n,7n | gzip -nc > ${sample_id}_pooled_pseudoreps.IDR0.05.narrowPeak.gz
+    awk 'BEGIN{OFS="\t"} \$12>='"\${idr_treshold_transformed}"' {print \$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10}' ${sample_id}_pooled_pseudoreps_idr | sort | uniq | sort -k7n,7n | gzip -nc > ${sample_id}_pooled_pseudoreps.IDR${params.idr_threshold}.narrowPeak.gz
     """
 }
 
@@ -383,7 +383,7 @@ process QC {
 
 
     output:
-    tuple val(sample_id), path("${sample_id}_optimal_set.IDR0.05.narrowPeak.gz")  into ch_optimal_set
+    tuple val(sample_id), path("${sample_id}_optimal_set.IDR${params.idr_threshold}.narrowPeak.gz")  into ch_optimal_set
     path("${sample_id}_idr_QC.txt")  into ch_qc
 
 
@@ -416,7 +416,7 @@ process QC {
     else:
         Optimal_set = idr_ppr
 
-    Optimal_set.to_csv("${sample_id}_optimal_set.IDR0.05.narrowPeak.gz", index=False, sep='\t', header=False, compression='gzip')
+    Optimal_set.to_csv("${sample_id}_optimal_set.IDR${params.idr_threshold}.narrowPeak.gz", index=False, sep='\t', header=False, compression='gzip')
     """
 }
 

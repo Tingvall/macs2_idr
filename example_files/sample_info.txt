@@ -1,0 +1,3 @@
+sample_id	bam1	bam1_ctrl	bam2	bam2_ctrl
+sample1	sample1_rep1.bam	sample1_rep1_input.bam	sample1_rep2.bam	sample1_rep2_input.bam
+sample2	sample2_rep1.bam	sample2_rep1_input.bam	sample2_rep2.bam	sample2_rep2_input.bam

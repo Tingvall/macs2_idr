@@ -41,7 +41,7 @@ nextflow run macs2_idr.nf --samples sample_info.txt --outdir peaks --genome_size
 #### Arguments
 | Argument | Description |
 | --- | --- |
-| `--samples` | Path to text file specifying inputs. (For example see: [peak_info.txt](example_files/peak_info.txt)).|
+| `--samples` | Path to text file specifying inputs. (For example see: [sample_info.txt](example_files/sample_info.txt)).|
 | `--genome_size` | Size of the genome. Default 2652783500 (mm10).|
 | `--macs_q` | q-value treshold for Macs2 peakcalling. Default: 0.05.|
 | `--skip_idr` | Specify if IDR should be skipped. Default: false.|

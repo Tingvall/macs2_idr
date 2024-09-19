@@ -51,3 +51,8 @@ nextflow run macs2_idr.nf --samples sample_info.txt --outdir peaks --genome_size
 
 
 ## Output
+All outputs are placed in the direcory specified by `--outdir`. Depending on the options, a number of different subdirectories will be created within this directory:
+- `<outdir>/`
+  - `peaks/`: Peak files for each replicate.
+  - `idr/`: Output from IDR analysis, including optimal peak set and QC.
+  - `bigwigs/`: Bigwig files for each replicates and pooled samples for visualization in genome browser.

@@ -25,21 +25,29 @@ nextflow run macs2_idr.nf --help
 #### Input
 
 #### Running the pipeline
-The typical command for running the pipeline is as follows:
+
+There are two version of the pipeline depending on the mode of peak calling in Macs2 (narrow/broad). Typical commands for running the pipelines are as follows:
+
+Narrow mode
 ```bash
-nextflow run macs2_idr.nf --samples sample_info.txt --outdir peaks
+nextflow run macs2_idr.nf --samples sample_info.txt --outdir peaks --genome_size 2652783500 --macs_q 0.05 --idr_threshold 0.05
+```
+
+Broad mode
+```bash
+nextflow run macs2_idr.nf --samples sample_info.txt --outdir peaks --genome_size 2652783500 --macs_q 0.05 --idr_threshold 0.05
 ```
 
 #### Arguments
 | Argument | Description |
 | --- | --- |
-| `--samples` | Path to text file specifying inputs. (For example see: [peak_into.txt](example_files/peak_info.txt))|
-| `--genome_size` | |
-| `--macs_q` | |
-| `--idr_threshold` | |
-| `--skip_idr` | |
-| `--cores` | |
-| `--help` | |
+| `--samples` | Path to text file specifying inputs. (For example see: [peak_into.txt](example_files/peak_info.txt)).|
+| `--genome_size` | Size of the genome. Default 2652783500 (mm10).|
+| `--macs_q` | q-value treshold for Macs2 peakcalling. Default: 0.05.|
+| `--skip_idr` | Specify if IDR should be skipped. Default: false.|
+| `--idr_threshold` | Treshold for IDR. Default: 0.05.|
+| `--cores` | Number of cores to use. Deatult: 8|
+| `--help` | Display help message.|
 
 
 ## Output
